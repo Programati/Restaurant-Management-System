@@ -73,12 +73,6 @@ _(Sección dedicada a anotar características a definir antes de iniciar la diag
 
 ## 7. Registro de Ideas y Decisiones Arquitectónicas (ADR)
 
-_(Utilizar esta plantilla para registrar cada desafío operativo o idea brillante y cómo se va a resolver a nivel de sistema. Esto evita repensar soluciones y facilita el futuro modelado de la base de datos)._
-
----
-
-### 🟢 Registros Actuales
-
 **Registro #1: Seguridad y Fraude en Pedidos QR**
 
 - **💡 El Problema / Casuística:** Un cliente podría escanear el QR, llevarse el enlace a su casa y hacer pedidos falsos a la mesa para molestar a la cocina.
