@@ -36,22 +36,24 @@ El sistema está pensado para resolver problemas reales del día a día en el sa
 - Carrito de compras asociado a la mesa/sesión.
 - Cálculo automático de totales y propinas.
 - Llamado al mozo integrado ("Pedir la cuenta", "Limpiar mesa").
+- **Flujo del módulo:** Cliente se sienta en una mesa libre y escanea el QR ➡️ Mira y selecciona el pedido llenando el carrito ➡️ Confirma el pedido ➡️ Puede llamar al mozo para limpiar la mesa o algo adicional ➡️ Espera a que el mozo confirme el pedido.
 
 ### B. Módulo de Reservas y Disponibilidad Online
 
 - **Portal Público:** Integrado en la web/redes del restaurante. El cliente puede ver el aforo y solicitar reserva para fecha/hora específica.
 - **Flujo de Confirmación:** La reserva no bloquea la mesa hasta que el personal la apruebe. Esto previene que clientes reserven impulsivamente y dejen las mesas vacías (No-show).
-- **Gestión de Estados:** Solicitada ➡️ Confirmada ➡️ En Curso (Inicia la Sesión) ➡️ Finalizada/Cancelada.
+- **Gestión del módulo:** Entra a la web ➡️ Solicita reserva ➡️ Espera confirmación ➡️ Obtiene un comprobante de reserva.
 
 ### C. Módulo de Administración (Panel de Control)
 
 - Mapa del salón en tiempo real (Mesas libres, ocupadas, unificadas).
 - Aprobación/Rechazo de pedidos entrantes.
 - Gestión de Menú (activar/desactivar platos por falta de stock).
+- Gestión de atencion (el mozo es el que realiza el flujo del módulo A).
 
 ## 5. Nuestro Diferencial Competitivo
 
-Existen muchos "menús QR", pero la mayoría son solo PDFs estáticos. Los sistemas más avanzados suelen fallar en la operativa real porque no entienden cómo funciona un salón.
+Existen muchos "menús QR", pero la mayoría son solo PDFs estáticos. Los sistemas más avanzados suelen fallar en la operativa real porque no entienden cómo funciona la casa de comida.
 Nuestro diferencial radica en **la arquitectura de Sesiones y la Intervención del Mozo**:
 
 1. No facturamos a la "Mesa", facturamos a la "Sesión", permitiendo una flexibilidad absoluta al agrupar mobiliario.
@@ -59,15 +61,51 @@ Nuestro diferencial radica en **la arquitectura de Sesiones y la Intervención d
 
 ---
 
-## 6. Espacio para Lluvia de Ideas y Funcionalidades Futuras
+## 6. Ideas y Funcionalidades Futuras
 
-_(Sección dedicada a anotar características a definir antes de iniciar la diagramación técnica y de base de datos)._
+_(Sección dedicada a anotar características a definir)._
 
-- [ ] _Idea 1: Implementar división de cuenta (ej. "Pagar lo que consumí" vs "Dividir en partes iguales")._
-- [ ] _Idea 2: Integración de pasarela de pagos directa en la web._
-- [ ] _Idea 3: Notificaciones Push o SMS para confirmaciones de reservas._
-- [ ] _Idea 4: ... (Agregar ideas aquí)_
-- [ ] _Idea 5: ..._
+### Pagos y Cierre de Cuenta
+
+- División Inteligente de Cuenta: Permitir múltiples modalidades desde la interfaz del cliente:
+  - Dividir el total en partes iguales.
+
+  - Pagar ítems específicos (**Pagar lo que consumí**).
+
+  - Agrupar ítems para subgrupos dentro de la misma mesa (Ej. una pareja paga su parte de una mesa de 10).
+
+- Integración de Pasarela de Pagos: Botón de pago directo en la web app (MercadoPago, o algún otro) para que el cliente pague sin esperar la terminal **POS** física.
+
+### Operativa de Salón y Control de Mesas
+
+- Control Total de **Juntar Mesas**: Esta acción debe ser exclusiva del panel del Mozo/Admin para mantener la integridad del mapa del salón y evitar que los clientes alteren la distribución.
+
+- Fusión de Mesas en Caliente: Permitir unificar mesas tanto al inicio (sin pedidos) como en mesas ya iniciadas (fusionando automáticamente los pedidos y cuentas de ambas sesiones involucradas).
+
+- Aprobación de Pedidos en Mesa (Doble Check): El mozo recibe la notificación del pedido **QR**, se acerca físicamente a la mesa para re-confirmar los ítems con los comensales, y recién ahí aprueba el envío a cocina.
+
+### Comunicación y Experiencia del Cliente
+
+- Llamado Asistido (Botón para el Mozo): Interfaz del cliente para notificar al mozo con opciones predefinidas (Ej: **Pedir la cuenta**, **Limpiar mesa**, **Consulta sobre el menú**, **Ayuda general**).
+
+- Alertas de Reserva: Notificaciones automáticas (Push, Email o **SMS**) para confirmaciones, recordatorios o cancelaciones de reservas.
+
+- Directorio del Local: Un botón rápido en el menú para información útil, como:
+  - Ubicación de los baños.
+
+  - Clave del Wi-Fi.
+
+  - Horarios de cierre.
+
+### Opcionales
+
+- Encuesta de Satisfacción Express: Al pedir la cuenta o pagar, mostrar una calificación rápida de 1 a 5 estrellas para medir la experiencia del cliente.
+
+### Sobre la Carta/Menu
+
+- Menú Multilingüe Dinámico: Opción para que el cliente cambie el idioma de la carta, facilitando la atención a turistas sin que el mozo deba traducir.
+
+- Filtros de Alérgenos y Dietas: Que el cliente pueda filtrar la carta por opciones (**Sin TACC**, **Vegano**, **Sin Lactosa**, etc.), posibles para cada plato.
 
 ---
 
