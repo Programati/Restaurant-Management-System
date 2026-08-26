@@ -183,6 +183,8 @@ Registra el ingreso real del dinero. Al estar en una tabla separada (relación 1
 - **nombre_metodo_pago**: VARCHAR(50) - Ej: 'Efectivo', 'MercadoPago', 'Tarjeta de Débito'.
 - **estado_activo**: BOOLEAN - Baja lógica
 
+
+DEBATIR EN LA NOCHE
 ---
 
 ## 🛠️ Guía de Migración a Herramientas Visuales
