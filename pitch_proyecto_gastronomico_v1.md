@@ -6,9 +6,18 @@
 
 ## 1. Propuesta de Valor
 
-El sector gastronómico sufre constantemente de cuellos de botella en la atención, especialmente en horas pico. Los clientes esperan demasiado para pedir, y los mozos se saturan tomando comandas en lugar de brindar hospitalidad.
+El sector gastronómico sufre cuellos de botella constantes, especialmente durante las horas pico. Los clientes esperan demasiado para pedir una mesa, consumir o pagar, mientras que el personal se satura la experiencia gastronómica del locál se ve afectada.
 
-Este sistema SaaS (Software as a Service) ofrece una solución integral que **digitaliza la carta, realiza la toma de pedidos y brinda la opción de reservar lugar**, pero manteniendo el control humano. No reemplaza al personal del local, sino que lo potencia, eliminando tiempos muertos y garantizando una operatividad fluida sin perder la calidez de la atención presencial.
+Este sistema SaaS transforma la dinámica del local, digitalizando tanto la carta, como la toma de pedidos y las reservas, pero manteniendo el control en manos del personal a cargo. Nuestro objetivo no es reemplazar al personal, sino potenciarlo. Al eliminar los tiempos muertos de espera y los errores de carga manual, garantizamos una operatividad fluida que le permite a los mozos enfocarse en lo que realmente importa: la calidez de la atención presencial y el incremento de las ventas.
+
+### Soluciones:
+
+- **Menú Interactivo y Pedidos Autogestionados:** Mediante un código QR único asociado a cada mesa, el cliente accede a un catálogo digital dinámico que funciona como un carrito de compras. Pueden explorar opciones y enviar sus pedidos directamente a la barra o cocina al instante, sin esperar a ser atendidos.
+- **Gestión Dinámica de Grupos (Sesiones):** La arquitectura del sistema no ata los consumos a una mesa. Permite unificar múltiples mesas bajo una misma "Sesión", ideal para grupos grandes o eventos, consolidando todos los pedidos en una cuenta maestra sincronizada.
+- **Cuentas Claras y Pagos Divididos:** Los comensales pueden visualizar el detalle del consumo desde sus teléfonos y utilizar una herramienta nativa para desglosar la cuenta, permitiendo que cada persona pague su parte de forma ágil y transparente.
+- **Reservas Inteligente:** Los clientes pueden visualizar la disponibilidad real del local y asegurar su lugar. El sistema bloquea el mobiliario automáticamente y gestiona el ingreso (check-in) mediante un código seguro, evitando la sobreventa de mesas.
+- **Métricas y Auditoría de Seguridad:** El sistema genera reportes automáticos de platos más vendidos, horas pico y rentabilidad, respaldado por un registro inmutable de actividades que previene fraudes internos y asegura el control total del negocio.
+- **Promociones Automatizadas:** Módulo integrado para programar descuentos (ej. Happy Hour) que se activan y aplican solos según el día y la hora, sin depender de la memoria del personal. Manejo de cupones de promociones Marketineras etc.
 
 ## 2. La Experiencia del Cliente
 
