@@ -21,6 +21,8 @@ Define los niveles de acceso estáticos del sistema.
 - **rol_id** (PK): Identificador único.
 - **nombre_rol**: VARCHAR(50) - Ej: 'Dueño', 'Administrador', 'Cajero', 'Mozo'.
 - **nivel_acceso**: INT - Jerarquía numérica para control en las rutas del backend y renderizado del frontend.
+- **fecha_creacion** TIMESTAMP.
+- **fecha_modificacion** TIMESTAMP.
 
 ### 3. USUARIOS (Control de Acceso)
 
@@ -83,7 +85,7 @@ Representa la disposición física del salón. No almacena consumos, solo el inv
 - **tenant_id** (FK)
 - **numero_mesa**: VARCHAR(10) - Permite letras si el local usa sectores (ej: "A1", "12").
 - **capacidad**: INT - **(DEBATIR)** Cantidad de comensales que entran en la mesa | Cantidad de comensales actual en dicha mesa.
-- **estado_fisico**: VARCHAR(20) - Ej: 'libre', 'ocupada', 'sucia'.
+- **estado_fisico**: VARCHAR(20) - Ej: 'libre', 'ocupada'.
 - **fecha_creacion** TIMESTAMP.
 - **fecha_modificacion** TIMESTAMP.
 
@@ -91,7 +93,7 @@ Representa la disposición física del salón. No almacena consumos, solo el inv
 >
 > - **Capacidad de las MESAS:** Conviene establecer la cantidad de personas que puede tener la mesa? Creo que puede ser 2 o 4, ya que pueden sentarse muchas más personas que solamente esten tomando algo y no con platos de comida `capacidad NULLEABLE`
 > - **estado_fisico:**
->   > - Podemos dejarlo con un tipo de dato `ENUM ['libre', 'ocupada', 'sucia', 'rota']` , sino hacer otra tabla para darle más libertad al dato pero ya hace complejos los JOIN y no creo que se tengan tantos estados para crear una tabla aparte.
+>   > - Podemos dejarlo con un tipo de dato `ENUM ['libre', 'ocupada']` , para evitar cambios de estado constante.
 >   > - Podemos programarlo que al pagar la cuenta, automaticamente se ponga en estado `SUCIA`.
 > - **observacion** Podemos agregar este campo para describir si hay alguna falla, como pata rota, o algun desperfecto que se le encuentre.
 
@@ -183,6 +185,7 @@ Representa la acción del cliente de enviar un conjunto de platos a la cocina o 
 > - Podemos acomodar en una COLA según sea aceptada la orden, estimar el tiempo aprox. de otros pedidos anteriores de la casa, o también calcular ni bien la comanda de cocina arranque a preparar ese pedido que aceptó ese sector.
 > - Hay que pensar mejor con respecto al DELIVEY, si crear tabla aparte porque agregandole este campo, suma muchos campos para asegurar el delivery, ya sea direccion, cliente, estado, y si pasa algo, una observacion tambien viene bien.
 > - No sé si conviene enredarnos con la tabla zonas y eso, ya que la app va a tener relevamiento de comidas del local y no tanto de cosas como qué barrio o calle es la que más pide.
+> - Crear modulo de DELIVERY aparte.
 
 ### 13. DETALLE_PEDIDO
 
@@ -284,6 +287,7 @@ Se enfoca en productos que se compran y se venden en la misma unidad, o que requ
 >
 > - **`COSTO PROMEDIO PONDERADO`** averiguar sobre este tema. Ya que si tenemos 10 cervezas que las compramos a $1.000 y luego compramos 10 nuevas a $2.000, el campo de precio unitario con el del precio de venta se tiene que actualizar automáticamente a $1.500 o aprox. Se tiene que calcular la rentabilidad en base a este promedio.
 > - Hay que abordar un inventario simple, para bebidas o platos tipo postres que se compran envasados o se preparan una X cantidad poque se echan a perder.
+> - Agregar tabla INVENTARIO MOBILIARIO
 
 ### 19. RESERVAS
 
