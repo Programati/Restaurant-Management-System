@@ -19,7 +19,7 @@ La raíz absoluta del sistema. Representa al cliente/restaurante que contrata el
 Define los niveles de acceso estáticos del sistema.
 
 - **rol_id** (PK): Identificador único.
-- **nombre_rol**: VARCHAR(50) - Ej: 'Dueño', 'Administrador', 'Cajero', 'Mozo'.
+- **nombre_rol**: VARCHAR(50) - Ej: 'Dueño', 'Administrador', 'Cajero', 'Mozo','Repartidor'.
 - **nivel_acceso**: INT - Jerarquía numérica para control en las rutas del backend y renderizado del frontend.
 - **fecha_creacion** TIMESTAMP.
 - **fecha_modificacion** TIMESTAMP.
@@ -84,18 +84,11 @@ Representa la disposición física del salón. No almacena consumos, solo el inv
 - **mesa_id** (PK)
 - **tenant_id** (FK)
 - **numero_mesa**: VARCHAR(10) - Permite letras si el local usa sectores (ej: "A1", "12").
-- **capacidad**: INT - **(DEBATIR)** Cantidad de comensales que entran en la mesa | Cantidad de comensales actual en dicha mesa.
-- **estado_fisico**: VARCHAR(20) - Ej: 'libre', 'ocupada'.
+- **capacidad**: INT - Cantidad de comensales que entran correctamente en la mesa (Mesa para 2, Mesa para 4).
+- **estado_fisico**: ENUM ['libre', 'ocupada'].
 - **fecha_creacion** TIMESTAMP.
 - **fecha_modificacion** TIMESTAMP.
-
-> **OBSERVACIONES PARA DEBATE:**
->
-> - **Capacidad de las MESAS:** Conviene establecer la cantidad de personas que puede tener la mesa? Creo que puede ser 2 o 4, ya que pueden sentarse muchas más personas que solamente esten tomando algo y no con platos de comida `capacidad NULLEABLE`
-> - **estado_fisico:**
->   > - Podemos dejarlo con un tipo de dato `ENUM ['libre', 'ocupada']` , para evitar cambios de estado constante.
->   > - Podemos programarlo que al pagar la cuenta, automaticamente se ponga en estado `SUCIA`.
-> - **observacion** Podemos agregar este campo para describir si hay alguna falla, como pata rota, o algun desperfecto que se le encuentre.
+- **observacion**: TEXT - Observaciones de que posiblemente la mesa esta rota o tiene algún desperfecto que arreglar.
 
 ### 8. SESIONES
 
@@ -104,17 +97,14 @@ Desvincula el consumo de la mesa física, permitiendo unificar mobiliario para g
 - **sesion_id** (PK)
 - **tenant_id** (FK)
 - **usuario_id** (FK) - Mozo que físicamente ve que ocuparon la mesa y aparta o confirma en el sistema que esa mesa si esta ocupada.
-- **estado_sesion**: VARCHAR(20) - Ej: 'abierta', 'cerrada', 'reservada'.
-- **fecha_apertura**: TIMESTAMP - Momento en que los clientes se sientan.
-- **fecha_cierre**: TIMESTAMP (Nullable) - Momento en que se paga la cuenta.
-- **codigo_reserva**: VARCHAR(20) (Nullable) - Si la sesión proviene del Módulo de Reservas, aquí se valida el código QR de entrada.
-- **fecha_creacion** TIMESTAMP.
-- **fecha_modificacion** TIMESTAMP.
+- **estado_sesion:** VARCHAR(20) - Ej: 'abierta', 'cerrada', 'reservada'.
+- **fecha_apertura:** TIMESTAMP - Momento en que los clientes se sientan.
+- **fecha_cierre:** TIMESTAMP (Nullable) - Momento en que se paga la cuenta.
+- **codigo_reserva:** VARCHAR(20) (Nullable) - Si la sesión proviene del Módulo de Reservas, aquí se valida el código QR de entrada.
+- **fecha_creacion:** TIMESTAMP.
+- **fecha_modificacion:** TIMESTAMP.
+- **comensales_asignados:** INT NULL.
 
-> **OBSERVACIONES PARA DEBATE:**
->
-> - **comensales_asignados** Podemos estableces este campo para poner o no la cantidad de personas que estén ocuapdo la mesa o el grupo de mesa `NULLEABLE` ya que si hay una cantidad muy concurrida de personas y el personal no da abasto, estar atento a rellenar este campo exactamente con el numero de personas que estan en la sesion seria muy molesto, estimar cantidad o si alguien que reserva las mesas, puede poner o tambien estimar que es X cantidad de personas van a estar.
-> - La sesion no sera atendido por un único mozo, no vinculamos ningún usuarion con ella, la sesion se abre cuando el pedido se hace y se confirma, por ende tenemos la info de los mozos que estan involucrados en todos los pedidos aceptados de una sesion en particular
 > - **Cliente escanea el QR:**
 >   1. Si la mesa no está reservada el QR va a hacer que esa sesion se abra.
 >   2. El mozo verifica físicamente del pedido de abrir la sesion, entonces el estado de la sesion pasa a 'abierta'.
@@ -156,10 +146,6 @@ Vamos a utiliza las ventajas de PostgreSQL para evitar exceso de tablas relacion
 - **fecha_creacion** TIMESTAMP.
 - **fecha_modificacion** TIMESTAMP.
 
-> **OBSERVACIONES PARA DEBATE:**
->
-> - **stock_id:** Podemos realcionarlo `FK nulleable` ya que puede ser o no algo envasado o echo en pocos stock como postres o platos especiales.
-
 ### 12. PEDIDOS (Cabecera de Comanda)
 
 Representa la acción del cliente de enviar un conjunto de platos a la cocina o barra. Con el vínculo del responsable (Mozo) de cada pedido aceptado, independientemente de quién sea el "Mozo" de la sesión.
@@ -175,8 +161,6 @@ Representa la acción del cliente de enviar un conjunto de platos a la cocina o 
 - **total_final**: DECIMAL(10,2) - sumatoria de ítems menos el descuento.
 - **tipo_entrega** ENUM ['local', 'delivery', 'retiro'].
 - **nombre_cliente** VARCHAR(50) NULL.
-- **direccion_entrega** TEXT NULL.
-- **estado_delivery** ENUM ['preparando', 'en_camino', 'entregado', 'cancelado'].
 - **fecha_creacion** TIMESTAMP.
 - **fecha_modificacion** TIMESTAMP.
 
@@ -223,11 +207,6 @@ Catálogo dinámico automatizado. Permite programar promociones para que se acti
 - **fecha_creacion** TIMESTAMP.
 - **fecha_modificacion** TIMESTAMP.
 
-> **OBSERVACIONES PARA DEBATE:**
->
-> - **Lo que aprobamos:** Al tener fechas, horarios y cupones evita que el mozo tenga que acordarse de hacer el descuento del Happy Hour; el sistema leerá la hora actual y lo aplicará solo.
-> - Hacemos que todas las promociones apliquen al **TOTAL DE LA FACTURA**.
-
 ## MÓDULO DE FACTURACIÓN Y PAGOS (Cierre de Cuenta)
 
 ### 15. FACTURAS_TICKETS (Resumen de la Cuenta)
@@ -266,30 +245,56 @@ Registra el ingreso real del dinero. Al estar en una tabla separada (relación 1
 - **nombre_metodo_pago**: VARCHAR(50) - Ej: 'Efectivo', 'MercadoPago', 'Tarjeta de Débito'.
 - **estado_activo**: BOOLEAN - Baja lógica
 
-### 18. INVENTARIO_SIMPLE
+### 18. INVENTARIO_CONSUMIBLES (Stock Operativo)
 
-Se enfoca en productos que se compran y se venden en la misma unidad, o que requieren un conteo estricto de seguridad.
+Reemplaza a Inventario_Simple. Almacena todos los bienes tangibles que el local compra recurrentemente (bebidas, descartables, insumos). No está atado obligatoriamente a un plato, lo que permite inventariar cosas que no se venden al público (ej: servilletas).
 
 - **articulo_id** (PK)
 - **tenant_id** (FK)
-- **plato_id** (FK, Nullable): Vincula este inventario directamente con un producto del menú (ej: Si se vende el plato "Lata Coca-Cola", se descuenta 1 de aquí).
-- **nombre_articulo**: VARCHAR(100) - Ej: "Botella Vino Rutini", "Porción Tiramisú".
-- **stock_actual**: INT - Cantidad física disponible en el local.
-- **stock_minimo**: INT - El umbral de alerta (Ej: Si llega a 10, el sistema avisa que hay que comprar más).
-- **costo_unitario**: DECIMAL(10,2) - Cuánto le cuesta al restaurante comprar esa unidad (permite calcular la ganancia neta rápida).
-- **estado**: BOOLEAN - Baja lógica.
+- **categoria_inventario_id** (FK).
+- **nombre_articulo**: VARCHAR(100) - Ej: "Coca-Cola 600ml", "Caja Hamburguesas x40", "Rollo de Cocina".
+- **stock_actual**: INT
+- **stock_minimo**: INT
+- **costo_unitario**: DECIMAL(10,2) - Para el cálculo de rentabilidad.
 - **creado_por** (FK a USUARIOS) -- Quién creó el registro.
 - **modificado_por** (FK a USUARIOS) -- Última modificación.
-- **fecha_creacion** TIMESTAMP.
-- **fecha_modificacion** TIMESTAMP.
+- **fecha_creacion**: TIMESTAMP
+- **fecha_modificacion**: TIMESTAMP
 
-> **OBSERVACIONES PARA DEBATE:**
->
-> - **`COSTO PROMEDIO PONDERADO`** averiguar sobre este tema. Ya que si tenemos 10 cervezas que las compramos a $1.000 y luego compramos 10 nuevas a $2.000, el campo de precio unitario con el del precio de venta se tiene que actualizar automáticamente a $1.500 o aprox. Se tiene que calcular la rentabilidad en base a este promedio.
-> - Hay que abordar un inventario simple, para bebidas o platos tipo postres que se compran envasados o se preparan una X cantidad poque se echan a perder.
-> - Agregar tabla INVENTARIO MOBILIARIO
+### 19. PLATO_ARTICULO
 
-### 19. RESERVAS
+Tabla intermedia que conecta el catálogo de ventas (PLATOS/COMIDA) con el stock de materia prima. Si el plato es "Lata Coca-Cola", se asocia aquí al artículo "Coca-Cola 600ml" indicando que descuente 1 unidad. Si el plato es "Hamburguesa", se asocia al artículo "Caja Hamburguesas x40" indicando que descuente 1 unidad (1 medallón).
+
+- **plato_id** (FK): PK Compuesta
+- **articulo_id** (FK): PK Compuesta
+- **cantidad_a_descontar**: DECIMAL(8,2) - Cuánto se resta del stock por cada venta de este plato.
+
+### 20. ACTIVOS_FIJOS (Mobiliario y Vajilla)
+
+Totalmente desconectada de las ventas. Sirve para que el dueño sepa cuánto capital tiene invertido en el local físico y registre pérdidas por roturas.
+
+- **activo_id** (PK).
+- **tenant_id** (FK).
+- **categoria_inventario_id** (FK).
+- **nombre_activo**: VARCHAR(100) - Ej: "Silla de Madera", "Vaso Pinta", "Tenedor Acero".
+- **cantidad_total**: INT - Cuántos hay físicamente en el local.
+- **cantidad_rota_perdida**: INT DEFAULT 0 - Registro de mermas.
+- **costo_reposicion_estimado**: DECIMAL(10,2) - Cuánto cuesta volver a comprar este activo hoy.
+- **fecha_creacion**: TIMESTAMP
+- **fecha_modificacion**: TIMESTAMP
+
+### 21. CATEGORIAS_INVENTARIO
+
+Permite que cada restaurante cree sus propias agrupaciones tanto para insumos como para mobiliario.
+
+- **categoria_inventario_id** (PK)
+- **tenant_id** (FK): Asegura que las categorías sean privadas de cada local.
+- **nombre_categoria**: VARCHAR(50) - Ej: 'Limpieza', 'Vajilla Premium', 'Bebidas sin Alcohol'.
+- **ambito**: ENUM ['consumible', 'activo_fijo'] - Filtro clave. Evita que al cargar una nueva silla, el sistema ofrezca la categoría "Ingredientes".
+- **fecha_creacion**: TIMESTAMP
+- **fecha_modificacion**: TIMESTAMP
+
+### 22. RESERVAS
 
 No va a registrar consumos, solo bloquea el mobiliario y genera el código de acceso.
 
@@ -306,7 +311,7 @@ No va a registrar consumos, solo bloquea el mobiliario y genera el código de ac
 - **fecha_creacion**: TIMESTAMP.
 - **fecha_modificacion** TIMESTAMP.
 
-### 20. RESERVA_MESA
+### 23. RESERVA_MESA
 
 Tabla intermedia. Permite asignar de antemano el mobiliario físico a una reserva futura, evitando que el sistema permita dobles reservas para la misma hora y mesa.
 
@@ -322,7 +327,7 @@ Tabla intermedia. Permite asignar de antemano el mobiliario físico a una reserv
 >   4. Copiar las mesas de `RESERVA_MESA` hacia `SESION_MESA`.
 >   5. Cambiar el estado físico de las mesas a 'ocupada'.
 
-### 21. TURNOS_TRABAJO (Fichada de Recursos Humanos)
+### 24. TURNOS_TRABAJO (Fichada de Recursos Humanos)
 
 Registra el "reloj de entrada y salida" de los empleados. Es vital para liquidar sueldos, auditar quién estaba trabajando un día específico y controlar el presentismo.
 
@@ -336,13 +341,7 @@ Registra el "reloj de entrada y salida" de los empleados. Es vital para liquidar
 - **fecha_creacion** TIMESTAMP.
 - **fecha_modificacion** TIMESTAMP.
 
-> **OBSERVACIONES PARA DEBATE (Trazabilidad Dinámica):**
->
-> - Elimine la tabla ASIGNACION_MESAS_MOZO para no atar a cada mozo a una sola mesa.
-> - Al relacionar el `usuario_id` directamente en el `PEDIDO` y en la `FACTURA`, logramos trazabilidad total sin importar si los mozos se ayudan entre sí o si hay cambio de turno.
-> - La tabla para la propina quiero hacer que la parte del FRONT calcule y muestre por aparte, para que sea una propina a voluntad, en efectivo y sin registro de los dueños.
-
-### 22. LOG_ACTIVIDADES (Auditoría y Seguridad)
+### 25. LOG_ACTIVIDADES (Auditoría y Seguridad)
 
 Rastrea movimientos críticos en el sistema. Permite a los dueños de los locales auditar las acciones de sus empleados para evitar fraudes o detectar errores operativos.
 
@@ -362,7 +361,7 @@ Rastrea movimientos críticos en el sistema. Permite a los dueños de los locale
 > - Podemos crear una pantalla "Panel de Auditoría", donde el dueño filtre: _"Mostrar todas las facturas anuladas de este mes"_.
 > - **Prevención de Fraude:** Borrados de ítems de una mesa antes de imprimir el ticket final para embolsar el efectivo. Con el campo `datos_anteriores` en JSONB, el sistema siempre recordará qué platos fueron eliminados de la comanda original, dándole tranquilidad total al administrador.
 
-### 23. METRICAS_DIARIAS (Dashboard y Analítica)
+### 26. METRICAS_DIARIAS (Dashboard y Analítica)
 
 _TIPO: VISTA MATERIALIZADA (Materialized View)_
 No es una tabla transaccional donde se insertan datos manualmente, sino una "foto en caché" que PostgreSQL calcula automáticamente a partir de las Facturas y Pedidos. Sirve para que el dashboard de Next.js cargue en milisegundos.
@@ -384,6 +383,93 @@ No es una tabla transaccional donde se insertan datos manualmente, sino una "fot
 > - **La Ejecución (Vista Materializada vs Tabla):** En lugar de crear una tabla normal y tener que programar un script en Node.js que calcule todo esto e inserte una fila a las 23:59hs (lo cual es propenso a fallos si el servidor se reinicia), crearemos una `MATERIALIZED VIEW` en PostgreSQL.
 > - **Mantenimiento:** Solo programaremos una tarea programada (Cron Job) a las 4:00 AM que ejecute el comando SQL: `REFRESH MATERIALIZED VIEW metricas_diarias;`. Así, la base de datos hace todo el trabajo matemático duro en la madrugada cuando nadie usa el sistema, y a la mañana siguiente el dueño tiene su gráfico listo al instante.
 
+## MÓDULO DELIVERY (Logística y Envíos)
+
+Extiende la información de un pedido cuando este es de tipo 'delivery'. Se activa solo si el tenant tiene habilitado este módulo.
+
+### 27. DELIVERY_PEDIDOS (Cabecera de Envío)
+
+- **delivery_id** (PK)
+- **pedido_id** (FK, UNIQUE).
+- **tenant_id** (FK)
+- **zona_id** (FK): Zona de reparto asignada.
+- **direccion_entrega**: TEXT NOT NULL - Calle, número, piso, etc.
+- **referencias**: TEXT - "Casa verde, al lado de la ferretería".
+- **latitud**: DECIMAL(10,8) - Para geolocalización.
+- **longitud**: DECIMAL(11,8) - Para geolocalización.
+- **estado_delivery**: ENUM - Valores: ['pendiente_asignacion', 'asignado', 'en_camino', 'entregado', 'cancelado', 'devuelto'].
+- **tiempo_estimado**: INT - Minutos estimados de entrega.
+- **tiempo_real_entrega**: INT - Minutos reales que tardó (para métricas).
+- **repartidor_id** (FK, Nullable): Usuario con rol 'Repartidor'.
+- **fecha_asignacion**: TIMESTAMP (Nullable)
+- **fecha_salida**: TIMESTAMP (Nullable) - Cuando sale del local.
+- **fecha_entregado**: TIMESTAMP (Nullable)
+- **calificacion_cliente**: INT (1-5) - Rating del servicio.
+- **comentario_cliente**: TEXT
+- **fecha_creacion**: TIMESTAMP
+- **fecha_modificacion**: TIMESTAMP
+
+### 28. ZONAS
+
+Permite al restaurante definir áreas geográficas y precios de envío dinámicos.
+
+- **zona_id** (PK)
+- **tenant_id** (FK)
+- **nombre_zona**: VARCHAR(100) - Ej: "Centro", "Norte", "Barrio X".
+- **costo_envio**: DECIMAL(10,2) - Precio fijo de envío.
+- **costo_envio_gratis_desde**: DECIMAL(10,2) (Nullable) - Monto mínimo para envío gratis.
+- **tiempo_estimado_base**: INT - Minutos promedio.
+- **poligono_geojson**: JSONB - Polígono en formato GeoJSON para geofencing (trazar el mapa).
+- **estado_activo**: BOOLEAN
+- **creado_por** (FK): Administrador.
+- **modificado_por** (FK): Administrador.
+- **fecha_creacion**: TIMESTAMP
+- **fecha_modificacion**: TIMESTAMP
+
+> **OBSERVACIONES Y DEBATE (Visión de Producto):**
+>
+> - **GeoJSON:** Guardando el polígono en formato JSONB nos permitirá a futuro usar bibliotecas como _Leaflet_ o _Google Maps_ en el frontend de Next.js para que el dueño dibuje su zona de cobertura exacta.
+
+### 29. DELIVERY_HORARIOS
+
+Configuración de horarios en los que se ofrece delivery por zona o general.
+
+- **horario_id** (PK)
+- **tenant_id** (FK)
+- **zona_id** (FK, Nullable) - Si es NULL, aplica a todas las zonas.
+- **dia_semana**: INT - 1=Lunes, 7=Domingo.
+- **hora_inicio**: TIME
+- **hora_fin**: TIME
+- **estado_activo**: BOOLEAN
+- **fecha_creacion**: TIMESTAMP
+- **fecha_modificacion**: TIMESTAMP
+
+### 30. REPARTIDORES (Flota Interna)
+
+Extensión 1 a 1 de la tabla `USUARIOS`. Los repartidores tienen rol específico y datos vehiculares.
+
+- **repartidor_id** (PK)
+- **usuario_id** (FK, UNIQUE)
+- **tenant_id** (FK)
+- **vehiculo**: VARCHAR(50) - "Moto", "Bicicleta", "Auto".
+- **patente**: VARCHAR(10) (Nullable)
+- **disponible**: BOOLEAN - Para saber si está en servicio.
+- **licencia_conducir**: VARCHAR(20)
+- **fecha_vencimiento_licencia**: DATE
+- **telefono_emergencia**: VARCHAR(20)
+- **fecha_creacion**: TIMESTAMP
+- **fecha_modificacion**: TIMESTAMP
+
+### ~~31. DELIVERY_TRACKING~~ (RECHAZADA PARA POSTGRESQL)
+
+_(Historial de ubicaciones en tiempo real del repartidor)_
+
+> 💡 **OBSERVACIONES Y DEBATE (Peligro de Rendimiento):**
+>
+> - **El problema técnico:** El "Tracking en tiempo real" significa que la app del repartidor enviará sus coordenadas GPS cada 5 o 10 segundos. Si tienes 50 locales, con 3 motos cada uno, insertando filas cada 5 segundos... tu base de datos PostgreSQL colapsará rápidamente, los discos se llenarán en semanas y tu factura de servidor será impagable.
+> - **La solución en la industria:** Las bases de datos relacionales (SQL) no se usan para tracking de GPS en vivo. Si queremos mostrar la motito moviéndose en el mapa del cliente, eso se maneja **en memoria** usando WebSockets (Socket.io) o bases no relacionales rapidísimas como Redis o Firebase Realtime Database.
+> - **Decisión MVP:** Para la Fase 1 de nuestro SaaS, deberíamos descartar el tracking en tiempo real (Uber-style) y manejarnos simplemente con el cambio de estados (`en_camino`, `entregado`) para ahorrar costos de servidor.
+
 ---
 
 ## 🛠️ Guía de Migración a Herramientas Visuales
@@ -395,311 +481,3 @@ Finalizada la estructura del modelo de datos en texto vamos a:
 - Permite renderizar el gráfico directamente dentro de este mismo archivo o en repositorios de código.
 - Debes abrir un bloque de código y especificar `mermaid`.
 - Usa la palabra reservada `erDiagram` para iniciar el gráfico y conectar las tablas.
-
-```mermaid
-erDiagram
-    %% RELACIONES PRINCIPALES
-    PLANES_SAAS ||--o{ TENANT : "suscribe"
-    TENANT ||--o{ USUARIOS : "posee"
-    ROLES ||--o{ USUARIOS : "define_nivel"
-
-    PLANES_SAAS ||--o{ PLAN_MODULO : "habilita"
-    MODULOS_SAAS ||--o{ PLAN_MODULO : "es_habilitado_en"
-
-    TENANT ||--o{ MESAS : "posee"
-    TENANT ||--o{ SESIONES : "gestiona"
-    USUARIOS ||--o{ SESIONES : "abre"
-    SESIONES ||--|{ SESION_MESA : "incluye"
-    MESAS ||--o{ SESION_MESA : "pertenece_a"
-
-    TENANT ||--o{ CATEGORIAS_MENU : "posee"
-    CATEGORIAS_MENU ||--o{ PLATOS : "agrupa"
-    TENANT ||--o{ PLATOS : "posee"
-
-    SESIONES ||--o{ PEDIDOS : "genera"
-    USUARIOS ||--o{ PEDIDOS : "toma"
-    PROMOCIONES ||--o{ PEDIDOS : "aplica_en"
-    PEDIDOS ||--|{ DETALLE_PEDIDO : "desglosa"
-    PLATOS ||--o{ DETALLE_PEDIDO : "es_pedido_en"
-
-    SESIONES ||--o| FACTURAS_TICKETS : "cierra_con"
-    USUARIOS ||--o{ FACTURAS_TICKETS : "cobra"
-    FACTURAS_TICKETS ||--o{ PAGOS : "se_abona_mediante"
-    METODO_DE_PAGOS ||--o{ PAGOS : "registra"
-
-    PLATOS ||--o| INVENTARIO_SIMPLE : "descuenta_stock"
-
-    TENANT ||--o{ RESERVAS : "administra"
-    USUARIOS ||--o{ RESERVAS : "aprueba"
-    RESERVAS ||--|{ RESERVA_MESA : "bloquea"
-    MESAS ||--o{ RESERVA_MESA : "es_reservada"
-
-    USUARIOS ||--o{ TURNOS_TRABAJO : "registra_fichada"
-    USUARIOS ||--o{ LOG_ACTIVIDADES : "ejecuta_accion"
-    TENANT ||--o{ LOG_ACTIVIDADES : "audita"
-    TENANT ||--o{ METRICAS_DIARIAS : "analiza"
-
-    %% DEFINICIÓN DE ENTIDADES Y ATRIBUTOS
-
-    TENANT {
-        int tenant_id PK
-        varchar nombre_fantasia
-        varchar subdominio
-        int plan_id FK
-        boolean estado
-        timestamp fecha_creacion
-        timestamp fecha_modificacion
-    }
-
-    ROLES {
-        int rol_id PK
-        varchar nombre_rol
-        int nivel_acceso
-    }
-
-    USUARIOS {
-        int usuario_id PK
-        int tenant_id FK
-        int rol_id FK
-        varchar username
-        varchar email
-        varchar password
-        boolean estado
-        timestamp ultimo_login
-        int intentos_fallidos
-        timestamp bloqueado_hasta
-        varchar token_recuperacion
-        timestamp fecha_creacion
-        timestamp fecha_modificacion
-    }
-
-    PLANES_SAAS {
-        int plan_id PK
-        varchar nombre_plan
-        decimal precio_mensual
-        int limite_admins
-        int limite_mozos
-        int limite_mesas_fisicas
-        boolean estado_activo
-        timestamp fecha_creacion
-        timestamp fecha_modificacion
-    }
-
-    MODULOS_SAAS {
-        int modulo_id PK
-        varchar codigo_modulo
-        text descripcion
-    }
-
-    PLAN_MODULO {
-        int plan_id FK
-        int modulo_id FK
-    }
-
-    MESAS {
-        int mesa_id PK
-        int tenant_id FK
-        varchar numero_mesa
-        int capacidad
-        varchar estado_fisico
-        timestamp fecha_creacion
-        timestamp fecha_modificacion
-    }
-
-    SESIONES {
-        int sesion_id PK
-        int tenant_id FK
-        int usuario_id FK
-        varchar estado_sesion
-        timestamp fecha_apertura
-        timestamp fecha_cierre
-        varchar codigo_reserva
-        timestamp fecha_creacion
-        timestamp fecha_modificacion
-    }
-
-    SESION_MESA {
-        int sesion_id FK
-        int mesa_id FK
-    }
-
-    CATEGORIAS_MENU {
-        int categoria_id PK
-        int tenant_id FK
-        varchar nombre
-        int orden
-        int creado_por FK
-        int modificado_por FK
-        timestamp fecha_creacion
-        timestamp fecha_modificacion
-    }
-
-    PLATOS {
-        int plato_id PK
-        int tenant_id FK
-        int categoria_id FK
-        varchar nombre
-        decimal precio_base
-        boolean disponible
-        jsonb opciones_personalizacion
-        int creado_por FK
-        int modificado_por FK
-        timestamp fecha_creacion
-        timestamp fecha_modificacion
-    }
-
-    PEDIDOS {
-        int pedido_id PK
-        int tenant_id FK
-        int sesion_id FK
-        int usuario_id FK
-        int promocion_id FK
-        enum estado_aprobacion
-        timestamp fecha_pedido
-        decimal monto_descuento
-        decimal total_final
-        enum tipo_entrega
-        varchar nombre_cliente
-        text direccion_entrega
-        enum estado_delivery
-        timestamp fecha_creacion
-        timestamp fecha_modificacion
-    }
-
-    DETALLE_PEDIDO {
-        int detalle_id PK
-        int pedido_id FK
-        int plato_id FK
-        int cantidad
-        decimal precio_unitario
-        varchar notas_cliente
-        timestamp fecha_creacion
-        timestamp fecha_modificacion
-    }
-
-    PROMOCIONES {
-        int promocion_id PK
-        int tenant_id FK
-        varchar nombre
-        enum tipo_descuento
-        decimal valor
-        boolean estado_activo
-        timestamp fecha_inicio
-        timestamp fecha_fin
-        varchar dias_semana
-        time horario_inicio
-        time horario_fin
-        varchar codigo_promocion
-        int uso_maximo
-        int usos_actuales
-        int creado_por FK
-        int modificado_por FK
-        timestamp fecha_creacion
-        timestamp fecha_modificacion
-    }
-
-    FACTURAS_TICKETS {
-        int factura_id PK
-        int tenant_id FK
-        int sesion_id FK
-        int usuario_id_cierre FK
-        decimal subtotal_consumos
-        decimal monto_descuentos
-        decimal total_final
-        timestamp fecha_emision
-        varchar estado_factura
-        timestamp fecha_creacion
-        timestamp fecha_modificacion
-    }
-
-    PAGOS {
-        int pago_id PK
-        int tenant_id FK
-        int factura_id FK
-        int metodo_pago_id FK
-        decimal monto_abonado
-        timestamp fecha_pago
-        timestamp fecha_creacion
-        timestamp fecha_modificacion
-    }
-
-    METODO_DE_PAGOS {
-        int metodo_pago_id PK
-        int tenant_id FK
-        varchar nombre_metodo_pago
-        boolean estado_activo
-    }
-
-    INVENTARIO_SIMPLE {
-        int articulo_id PK
-        int tenant_id FK
-        int plato_id FK
-        varchar nombre_articulo
-        int stock_actual
-        int stock_minimo
-        decimal costo_unitario
-        boolean estado
-        int creado_por FK
-        int modificado_por FK
-        timestamp fecha_creacion
-        timestamp fecha_modificacion
-    }
-
-    RESERVAS {
-        int reserva_id PK
-        int tenant_id FK
-        varchar cliente_nombre
-        varchar cliente_telefono
-        timestamp fecha_reserva
-        int cantidad_personas
-        enum estado
-        varchar codigo_qr
-        text notas
-        int usuario_id FK
-        timestamp fecha_creacion
-        timestamp fecha_modificacion
-    }
-
-    RESERVA_MESA {
-        int reserva_id FK
-        int mesa_id FK
-    }
-
-    TURNOS_TRABAJO {
-        int turno_id PK
-        int tenant_id FK
-        int usuario_id FK
-        timestamp fecha_inicio
-        timestamp fecha_fin
-        enum estado
-        text notas
-        timestamp fecha_creacion
-        timestamp fecha_modificacion
-    }
-
-    LOG_ACTIVIDADES {
-        int log_id PK
-        int tenant_id FK
-        int usuario_id FK
-        varchar accion
-        varchar tabla_afectada
-        int registro_id
-        jsonb datos_anteriores
-        jsonb datos_nuevos
-        varchar ip_origen
-        timestamp fecha_hora
-    }
-
-    METRICAS_DIARIAS {
-        int metrica_id PK
-        int tenant_id FK
-        date fecha
-        decimal total_ventas
-        int cantidad_pedidos
-        int cantidad_sesiones
-        decimal promedio_mesa
-        int plato_mas_vendido_id FK
-        int metodo_pago_mas_usado_id FK
-        time hora_pico
-    }
-```
